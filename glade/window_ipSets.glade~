@@ -1,0 +1,451 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Generated with glade 3.18.3 -->
+<interface>
+  <requires lib="gtk+" version="3.12"/>
+  <object class="GtkListStore" id="lstStore_allowedIPs">
+    <columns>
+      <!-- column-name № -->
+      <column type="guint64"/>
+      <!-- column-name IP-адрес -->
+      <column type="gchararray"/>
+      <!-- column-name Занят -->
+      <column type="gboolean"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">1.1.1.10</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">1.1.1.100</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">3</col>
+        <col id="1" translatable="yes">1.1.1.99</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">4</col>
+        <col id="1" translatable="yes">1.1.1.32</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">5</col>
+        <col id="1" translatable="yes">1.1.1.30</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">6</col>
+        <col id="1" translatable="yes">1.1.1.40</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">7</col>
+        <col id="1" translatable="yes">1.1.1.50</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">8</col>
+        <col id="1" translatable="yes">1.1.1.60</col>
+        <col id="2">False</col>
+      </row>
+      <row>
+        <col id="0">250</col>
+        <col id="1" translatable="yes">192.168.141.199</col>
+        <col id="2">False</col>
+      </row>
+    </data>
+  </object>
+  <object class="GtkListStore" id="lstStore_forbiddenIPs"/>
+  <object class="GtkListStore" id="lstStore_realIPs">
+    <columns>
+      <!-- column-name № -->
+      <column type="gint64"/>
+      <!-- column-name IP-адрес -->
+      <column type="gchararray"/>
+    </columns>
+    <data>
+      <row>
+        <col id="0">1</col>
+        <col id="1" translatable="yes">1.1.1.12</col>
+      </row>
+      <row>
+        <col id="0">2</col>
+        <col id="1" translatable="yes">1.1.1.120</col>
+      </row>
+      <row>
+        <col id="0">3</col>
+        <col id="1" translatable="yes">1.1.1.11</col>
+      </row>
+      <row>
+        <col id="0">4</col>
+        <col id="1" translatable="yes">1.1.1.210</col>
+      </row>
+      <row>
+        <col id="0">5</col>
+        <col id="1" translatable="yes">1.1.1.99</col>
+      </row>
+      <row>
+        <col id="0">6</col>
+        <col id="1" translatable="yes"/>
+      </row>
+      <row>
+        <col id="0">7</col>
+        <col id="1" translatable="yes"/>
+      </row>
+      <row>
+        <col id="0">8</col>
+        <col id="1" translatable="yes"/>
+      </row>
+      <row>
+        <col id="0">10</col>
+        <col id="1" translatable="yes"/>
+      </row>
+    </data>
+  </object>
+  <object class="GtkWindow" id="window_ipAddrSets">
+    <property name="height_request">350</property>
+    <property name="can_focus">False</property>
+    <property name="title" translatable="yes">Настройка множеств IP-адресов</property>
+    <property name="default_width">500</property>
+    <property name="default_height">600</property>
+    <property name="destroy_with_parent">True</property>
+    <signal name="destroy" handler="on_window_ipAddrSets_destroy" swapped="no"/>
+    <child>
+      <object class="GtkGrid" id="grid_ipSets">
+        <property name="visible">True</property>
+        <property name="can_focus">True</property>
+        <property name="has_focus">True</property>
+        <property name="margin_left">5</property>
+        <property name="margin_right">5</property>
+        <property name="margin_top">5</property>
+        <property name="margin_bottom">5</property>
+        <property name="row_spacing">5</property>
+        <property name="column_spacing">10</property>
+        <child>
+          <object class="GtkLabel" id="label1">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">1. Разрешенные адреса</property>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label21">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">2. Занятые адреса
+(реальные хосты)</property>
+          </object>
+          <packing>
+            <property name="left_attach">2</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkLabel" id="label3">
+            <property name="visible">True</property>
+            <property name="can_focus">False</property>
+            <property name="label" translatable="yes">3. Запрещенные адреса</property>
+          </object>
+          <packing>
+            <property name="left_attach">4</property>
+            <property name="top_attach">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_1to3">
+            <property name="label" translatable="yes">-&gt; 3</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <signal name="clicked" handler="on_btn_1to3_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_2to1">
+            <property name="label" translatable="yes">-&gt; 1</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <signal name="clicked" handler="on_btn_2to1_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">3</property>
+            <property name="top_attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_2to3">
+            <property name="label" translatable="yes">-&gt; 3</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <signal name="clicked" handler="on_btn_2to3_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">3</property>
+            <property name="top_attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_3to1">
+            <property name="label" translatable="yes">-&gt; 1</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <signal name="clicked" handler="on_btn_3to1_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">5</property>
+            <property name="top_attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_3to2">
+            <property name="label" translatable="yes">-&gt; 2</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <property name="image_position">right</property>
+            <signal name="clicked" handler="on_btn_3to2_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">5</property>
+            <property name="top_attach">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow2">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="shadow_type">in</property>
+            <property name="min_content_width">200</property>
+            <child>
+              <object class="GtkTreeView" id="tree_realIpsSet">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="model">lstStore_realIPs</property>
+                <property name="enable_grid_lines">both</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection3">
+                    <property name="mode">multiple</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treecolumn_ipNumber1">
+                    <property name="sizing">autosize</property>
+                    <property name="min_width">40</property>
+                    <property name="max_width">50</property>
+                    <property name="title" translatable="yes">№</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertoggle3"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treecolumn_ipAddress1">
+                    <property name="resizable">True</property>
+                    <property name="spacing">2</property>
+                    <property name="sizing">autosize</property>
+                    <property name="min_width">80</property>
+                    <property name="max_width">124</property>
+                    <property name="title" translatable="yes">IP-адрес</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertoggle4"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">2</property>
+            <property name="top_attach">1</property>
+            <property name="height">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow3">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="shadow_type">in</property>
+            <property name="min_content_width">200</property>
+            <child>
+              <object class="GtkTreeView" id="tree_forbiddenIpsSet">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="model">lstStore_forbiddenIPs</property>
+                <property name="search_column">0</property>
+                <property name="enable_grid_lines">both</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection4">
+                    <property name="mode">multiple</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treecolumn_ipNumber2">
+                    <property name="spacing">2</property>
+                    <property name="sizing">autosize</property>
+                    <property name="min_width">40</property>
+                    <property name="max_width">50</property>
+                    <property name="title" translatable="yes">№</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertoggle5"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treecolumn_ipAddress2">
+                    <property name="spacing">2</property>
+                    <property name="sizing">autosize</property>
+                    <property name="min_width">80</property>
+                    <property name="max_width">124</property>
+                    <property name="title" translatable="yes">IP-адрес</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertoggle6"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">4</property>
+            <property name="top_attach">1</property>
+            <property name="height">2</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="btn_1to2">
+            <property name="label" translatable="yes">-&gt; 2</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <property name="halign">center</property>
+            <property name="valign">center</property>
+            <signal name="clicked" handler="on_btn_1to2_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="left_attach">1</property>
+            <property name="top_attach">1</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scrolledwindow1">
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="hexpand">True</property>
+            <property name="shadow_type">in</property>
+            <property name="min_content_width">240</property>
+            <child>
+              <object class="GtkTreeView" id="tree_allowedIpsSet1">
+                <property name="visible">True</property>
+                <property name="can_focus">True</property>
+                <property name="vexpand">True</property>
+                <property name="model">lstStore_allowedIPs</property>
+                <property name="search_column">0</property>
+                <property name="enable_grid_lines">both</property>
+                <child internal-child="selection">
+                  <object class="GtkTreeSelection" id="treeview-selection6">
+                    <property name="mode">multiple</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treecolumn_ipNumber3">
+                    <property name="sizing">autosize</property>
+                    <property name="min_width">40</property>
+                    <property name="max_width">50</property>
+                    <property name="title" translatable="yes">№</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertoggle1"/>
+                      <attributes>
+                        <attribute name="text">0</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treecolumn_ipAddress3">
+                    <property name="spacing">2</property>
+                    <property name="sizing">autosize</property>
+                    <property name="min_width">80</property>
+                    <property name="max_width">124</property>
+                    <property name="title" translatable="yes">IP-адрес</property>
+                    <property name="expand">True</property>
+                    <child>
+                      <object class="GtkCellRendererText" id="cellrenderertoggle2"/>
+                      <attributes>
+                        <attribute name="text">1</attribute>
+                      </attributes>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkTreeViewColumn" id="treeсolumn_isUsed">
+                    <property name="title" translatable="yes">Занят</property>
+                    <child>
+                      <object class="GtkCellRendererToggle" id="cellrenderertoggle7"/>
+                    </child>
+                  </object>
+                </child>
+              </object>
+            </child>
+          </object>
+          <packing>
+            <property name="left_attach">0</property>
+            <property name="top_attach">1</property>
+            <property name="height">2</property>
+          </packing>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+        <child>
+          <placeholder/>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>
