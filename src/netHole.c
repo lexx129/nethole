@@ -13,13 +13,9 @@ int main(int argc, char *argv[])
     GtkBuilder      *builder; 
     
     gtk_init(&argc, &argv);
-    // builder = gtk_builder_new();
     builder = gtk_builder_new_from_file("glade/window_main.glade");
-    // gtk_builder_add_from_file (builder, "glade/window_main.glade", NULL);
- 
     mainWindow = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
     gtk_builder_connect_signals(builder, NULL);
- 
     g_object_unref(builder);
  
     gtk_widget_show(mainWindow);                
@@ -28,8 +24,8 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-// called when window is closed
-void on_window1_destroy()
+/* обработчик закрытия главного окна */
+void on_window_main_destroy()
 {
     gtk_main_quit();
 }
@@ -62,19 +58,16 @@ void on_btn_changeIpAddrSet_clicked()
 
 void on_btn_changePortsSet_clicked()
 {
-    if (gtk_widget_get_realized(portSetsWindow))
+
+    /*проверяем, отрисовывалось ли уже это окно */
+    if (gtk_widget_get_realized(portSetsWindow))         
         gtk_window_present(GTK_WINDOW(portSetsWindow));
     else
     {
         GtkBuilder      *builder; 
                     
         builder = gtk_builder_new_from_file("glade/window_portSets.glade");
-
-        // builder = gtk_builder_new();
-        // gtk_builder_add_from_file (builder, "glade/window_ipSets.glade", NULL);
-
         portSetsWindow = GTK_WIDGET(gtk_builder_get_object(builder, "window_portSets"));
-            
         gtk_builder_connect_signals(builder, NULL);
         g_object_unref(builder);
              
@@ -93,3 +86,97 @@ void on_window_portSets_destroy()
 {
     gtk_widget_destroy(portSetsWindow);
 }
+
+void on_entry_subnet_changed(GtkEditable *subnetEntry)
+{
+    gint res;
+    // printf("%s\n", "Callback!");
+    gchar *contents = gtk_editable_get_chars(subnetEntry, 0, -1);
+    res = g_printf("%s\n", contents);
+    g_free(contents);
+}
+
+void on_entry_netmask_changed(GtkEditable *subnetEntry)
+{
+    gint res;
+    gchar *contents = gtk_editable_get_chars(subnetEntry, 0, -1);
+    res = g_printf("%s\n", contents);
+    g_free(contents);
+}
+
+void on_spnbtn_throttleSize_value_changed(GtkSpinButton *throttleSize)
+{
+    gint value;
+    gint res;
+    value = gtk_spin_button_get_value_as_int(throttleSize);
+    res = g_printf("%d\n", value);
+}
+
+void on_scl_tapitActivity_value_changed(GtkRange *tarpitActivity)
+{
+    gint value;
+    gint res;
+    GtkAdjustment *adj;
+    adj = gtk_range_get_adjustment(tarpitActivity);
+    value = gtk_adjustment_get_value(adj);
+    res = g_printf("%d\n", value);
+}
+
+/*
+*   Обработчик, который получает список сетевых интерфейсов
+*   для комбобокса при отрисовке вкладки с настройками
+*/
+void on_combobox_interface_map(GtkWidget *interfaces, GtkListStore *ifacesModel)
+{
+    
+    // GtkTreeStore *ifacesModel;
+    GtkTreeIter iter;
+    gboolean next;
+    gchar *ifaceName;
+    gint rowCount;
+    gchar *path;
+
+    //  ifacesModel = gtk_combo_box_get_model(GTK_COMBO_BOX(interfaces));
+   
+    /*проверка, заполнен уже список или нет*/
+     next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ifacesModel), &iter);
+     while (next)
+     {
+        gtk_tree_model_get(GTK_TREE_MODEL(ifacesModel), &iter, 0, &ifaceName, -1);
+        g_print("IFace #%d name: %s\n", rowCount, ifaceName);
+        g_free(ifaceName);
+        next = gtk_tree_model_iter_next(GTK_TREE_MODEL(ifacesModel), &iter);
+        rowCount++;
+    }
+    
+    /*итератор не установился -> список не заполнен*/
+
+    /*тут будет код, 
+            получающий список сетевых устройств*/
+}
+
+void on_combobox_interface_changed(GtkComboBox *ifaces, GtkListStore *ifacesModel)
+{
+    GtkTreeIter iter;
+    gboolean next;
+    gchar *ifaceName;
+
+    next = gtk_combo_box_get_active_iter(ifaces, &iter);
+    if (next)
+    {
+        gtk_tree_model_get(GTK_TREE_MODEL(ifacesModel), &iter, 0, &ifaceName, -1);
+        g_print("Selected iface: %s\n", ifaceName);
+        g_free(ifaceName);
+    }
+    else
+        g_print("Didn't got iterator :(");
+
+}
+
+
+// static gchar* format_value_callback(GtkScale    *scale,
+//                                     gdouble     value)
+// {
+//     return g_strdup_printf("-->\%0.*g<--",
+//                             gtk_scale_get_digits(scale), value);
+// }
