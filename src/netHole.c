@@ -24,12 +24,18 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/* обработчик закрытия главного окна */
+/* 
+*   Обработчик закрытия главного окна
+*/
 void on_window_main_destroy()
 {
     gtk_main_quit();
 }
 
+
+/*
+*   Обработчик кнопки настройки множеств IP-адресов
+*/
 void on_btn_changeIpAddrSet_clicked()
 {
     if (gtk_widget_get_realized(ipSetsWindow))
@@ -56,6 +62,9 @@ void on_btn_changeIpAddrSet_clicked()
     }
 }
 
+/*
+*   Обработчик кнопки настройки множеств портов
+*/
 void on_btn_changePortsSet_clicked()
 {
 
@@ -75,18 +84,25 @@ void on_btn_changePortsSet_clicked()
     }
 }
 
-
+/*
+*   Закрыто окно настройки множеств IP-адресов
+*/
 void on_window_ipAddrSet_destroy()
 {
     gtk_widget_destroy(ipSetsWindow);
 }
 
-
+/*
+*   Закрыто окно настройки множеств портов
+*/
 void on_window_portSets_destroy()
 {
     gtk_widget_destroy(portSetsWindow);
 }
 
+/*
+*   Настройки - Общие - Подсеть
+*/
 void on_entry_subnet_changed(GtkEditable *subnetEntry)
 {
     gint res;
@@ -96,6 +112,9 @@ void on_entry_subnet_changed(GtkEditable *subnetEntry)
     g_free(contents);
 }
 
+/*
+*   Настройки - Общие - Маска подсети
+*/
 void on_entry_netmask_changed(GtkEditable *subnetEntry)
 {
     gint res;
@@ -104,6 +123,9 @@ void on_entry_netmask_changed(GtkEditable *subnetEntry)
     g_free(contents);
 }
 
+/*
+*   Настройки - Ловушка - Размер окна
+*/
 void on_spnbtn_throttleSize_value_changed(GtkSpinButton *throttleSize)
 {
     gint value;
@@ -112,6 +134,9 @@ void on_spnbtn_throttleSize_value_changed(GtkSpinButton *throttleSize)
     res = g_printf("%d\n", value);
 }
 
+/*
+*   Настройки - Ловушка - Активность хостов
+*/
 void on_scl_tapitActivity_value_changed(GtkRange *tarpitActivity)
 {
     gint value;
@@ -139,9 +164,16 @@ void on_combobox_interface_map(GtkWidget *interfaces, GtkListStore *ifacesModel)
     //  ifacesModel = gtk_combo_box_get_model(GTK_COMBO_BOX(interfaces));
    
     /*проверка, заполнен уже список или нет*/
-     next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ifacesModel), &iter);
-     while (next)
-     {
+    next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ifacesModel), &iter);
+
+    /*итератор не установился -> список не заполнен*/
+    if(!next){
+    /*тут будет код, 
+            получающий список сетевых устройств*/    
+    }
+
+    while (next)
+    {
         gtk_tree_model_get(GTK_TREE_MODEL(ifacesModel), &iter, 0, &ifaceName, -1);
         g_print("IFace #%d name: %s\n", rowCount, ifaceName);
         g_free(ifaceName);
@@ -149,10 +181,6 @@ void on_combobox_interface_map(GtkWidget *interfaces, GtkListStore *ifacesModel)
         rowCount++;
     }
     
-    /*итератор не установился -> список не заполнен*/
-
-    /*тут будет код, 
-            получающий список сетевых устройств*/
 }
 
 void on_combobox_interface_changed(GtkComboBox *ifaces, GtkListStore *ifacesModel)
