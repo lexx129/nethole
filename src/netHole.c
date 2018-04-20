@@ -105,10 +105,10 @@ void on_window_portSets_destroy()
 */
 void on_entry_subnet_changed(GtkEditable *subnetEntry)
 {
-    gint res;
+   
     // printf("%s\n", "Callback!");
     gchar *contents = gtk_editable_get_chars(subnetEntry, 0, -1);
-    res = g_printf("%s\n", contents);
+    g_print("New subnet: %s\n", contents);
     g_free(contents);
 }
 
@@ -117,9 +117,8 @@ void on_entry_subnet_changed(GtkEditable *subnetEntry)
 */
 void on_entry_netmask_changed(GtkEditable *subnetEntry)
 {
-    gint res;
     gchar *contents = gtk_editable_get_chars(subnetEntry, 0, -1);
-    res = g_printf("%s\n", contents);
+    g_print("New netmask: %s\n", contents);
     g_free(contents);
 }
 
@@ -129,9 +128,8 @@ void on_entry_netmask_changed(GtkEditable *subnetEntry)
 void on_spnbtn_throttleSize_value_changed(GtkSpinButton *throttleSize)
 {
     gint value;
-    gint res;
     value = gtk_spin_button_get_value_as_int(throttleSize);
-    res = g_printf("%d\n", value);
+    g_print("New throttleSize: %d\n", value);
 }
 
 /*
@@ -140,18 +138,18 @@ void on_spnbtn_throttleSize_value_changed(GtkSpinButton *throttleSize)
 void on_scl_tapitActivity_value_changed(GtkRange *tarpitActivity)
 {
     gint value;
-    gint res;
     GtkAdjustment *adj;
     adj = gtk_range_get_adjustment(tarpitActivity);
     value = gtk_adjustment_get_value(adj);
-    res = g_printf("%d\n", value);
+    g_print("New tarpitActivity = %d %\n", value);
 }
 
 /*
 *   Обработчик, который получает список сетевых интерфейсов
 *   для комбобокса при отрисовке вкладки с настройками
 */
-void on_combobox_interface_map(GtkWidget *interfaces, GtkListStore *ifacesModel)
+void on_combobox_interface_map(GtkWidget *interfaces,
+                                GtkListStore *ifacesModel)
 {
     
     // GtkTreeStore *ifacesModel;
@@ -183,7 +181,11 @@ void on_combobox_interface_map(GtkWidget *interfaces, GtkListStore *ifacesModel)
     
 }
 
-void on_combobox_interface_changed(GtkComboBox *ifaces, GtkListStore *ifacesModel)
+/*
+*   Настройки - Общие - Сетевой интерфейс
+*/
+void on_combobox_interface_changed(GtkComboBox *ifaces,
+                                    GtkListStore *ifacesModel)
 {
     GtkTreeIter iter;
     gboolean next;
@@ -201,10 +203,254 @@ void on_combobox_interface_changed(GtkComboBox *ifaces, GtkListStore *ifacesMode
 
 }
 
+/*
+*   Названия столбцов основной таблицы с ложными хостами
+*/
+enum {
+    COLUMN_NUMBER,
+    COLUMN_IPADDR,
+    COLUMN_STATUS,
+    COLUMN_SOURCE,
+    COLUMN_ROLE
+};
 
-// static gchar* format_value_callback(GtkScale    *scale,
-//                                     gdouble     value)
+/*
+*   Обработчик изменения роли ложного хоста
+*/
+void on_cellrenderercombo1_changed(GtkCellRendererCombo *roleCombo,
+                                // gchar *path;
+                                GtkTreeIter *newIter,
+                                GtkListStore *rolesModel)
+{
+    GtkListStore *model;
+    gboolean next;
+    gchar *newrole;
+    gint n;
+
+    // next = gtk_tree_model_get_iter(GTK_TREE_MODEL(rolesModel), newIter);
+    // if (next){
+    g_print("Pointed model size: %d\n", sizeof(*rolesModel));
+    g_object_get(roleCombo, "model", &model, NULL);
+    g_print("Fetched model size: %d\n", sizeof(*model));
+    g_print("Iter size: %d\n", sizeof(*newIter));
+    if (newIter != NULL)
+    {
+        gtk_tree_model_get(GTK_TREE_MODEL(rolesModel), newIter, 0, &newrole, -1);
+        g_print("Selected role: %s\n", newrole);
+    }
+    else g_print("iter is empty");
+
+
+    // }
+    // else
+    //     g_print("Problem when getting the iterator");
+    // g_free(newrole);
+    g_object_unref(model);
+}
+
+/*
+*   Несколько функций для тестового
+*   заполнения таблицы ложных хостов
+*/
+
+gchar* create_addr(int i, gboolean flag)
+{
+    gchar* result = malloc(32);
+    if (result == NULL)
+        g_print("Alloc error");
+    
+    if (flag)
+    {
+        sprintf(result, "1.1.1.%d", i); 
+    }
+    else 
+    {
+        i+=32;
+        sprintf(result, "10.10.0.%d", i);
+    }
+    return result;
+}
+
+gchar* create_status(int i)
+{
+    gchar* result = malloc(40);
+    const gchar* statuses[] = {
+        "idle", "capturing", "session_captured"
+    };
+    sprintf(result, "%s", statuses[i%3]);
+    return result;
+}
+
+/*
+*   Если ни одной роли ложных хостов
+*   не задано, нужно их создать
+*/
+void create_roles(GtkListStore *source)
+{
+    GtkTreeIter iter;
+   
+    gboolean next;
+    gint i;
+    const gchar* roles[] = {
+        "workstation", "mail-server", "file-server", "\0"
+    };
+    gchar *role;
+    i = 0;
+    /*
+    *   Сначала проверим, что лежит в полученной модели
+    */
+    next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(source), &iter);
+    if (!next)
+    {
+        g_print("***Fake hosts' roles model is empty!***\n");
+    }
+
+    while (next)
+    {
+         gtk_tree_model_get(GTK_TREE_MODEL(source), &iter, 
+                            0, &role,
+                            -1);
+            g_print("%d old role :%s \n", i, role);
+            g_free(role);
+            next = gtk_tree_model_iter_next(GTK_TREE_MODEL(source), &iter);
+            i++;
+    }   
+
+    /*
+    *   Запишем новые роли в модель
+    */
+    i = 0;
+
+    while (strcmp(roles[i], "\0"))
+    {
+        // g_print("**Started filling in the roles model**\n");
+        gtk_list_store_insert_with_values(source, &iter, -1, 0, roles[i], -1);
+        // gtk_list_store_append(source, &iter);
+        // gtk_list_store_set(source, &iter,
+        //                     0, roles[i],
+        //                     -1);
+        i++;
+    }
+
+    /*
+    *   Проверим, заполнилась ли роль
+    */
+    i = 0;
+    next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(source), &iter);
+    if (!next)
+    {
+        g_print("***Fake hosts' roles model is still empty!***\n");
+    }
+
+    while (next)
+    {
+         gtk_tree_model_get(GTK_TREE_MODEL(source), &iter, 
+                            0, &role,
+                            -1);
+            g_print("%d new role :%s \n", i, role);
+            g_free(role);
+            next = gtk_tree_model_iter_next(GTK_TREE_MODEL(source), &iter);
+            i++;
+    }
+  
+    // gchar* result = malloc(40);
+    
+    // sprintf(result, "%s", roles[i%3]);
+
+    // return result;
+}
+
+// void on_tree_fakeHosts_map(GtkWidget *fakeHosts, 
+//                             GtkListStore *roles)
 // {
-//     return g_strdup_printf("-->\%0.*g<--",
-//                             gtk_scale_get_digits(scale), value);
-// }
+//     GtkListStore *newStore;
+//     GtkTreeViewColumn *newroleColumn;
+//     GtkTreeIter iter;
+//     gint columnNumber;
+//     int i;   
+
+//     GtkCellRenderer *render; 
+
+//     newStore = gtk_list_store_new(5, 
+//                                     G_TYPE_INT,
+//                                     G_TYPE_STRING,
+//                                     G_TYPE_STRING,
+//                                     G_TYPE_STRING,
+//                                     G_TYPE_STRING);
+//     // roles = gtk_list_store_new(1,
+//     //                             G_TYPE_STRING);
+
+//     gchar *addr;
+//     gchar *status;
+//     gchar *source;
+//     gchar *role;
+
+//     /*
+//     *   Создаем новые записи для таблицы ложных хостов
+//     */
+
+//     for (i = 0; i < 10; i++)
+//     {
+//         addr = create_addr(i, TRUE);
+//         // g_print("%d. Addr is %s\n", i, addr);
+//         status = create_status(i);
+//         // g_print("%d. Status is %s\n", i, status);
+//         source = create_addr(i, FALSE);
+//         // g_print("%d. Source addr is %s\n", i,  source);
+//         // role = create_role(i);
+//         // g_print("%d. Role is %s\n*****\n", i, role);
+
+//         gtk_list_store_append(newStore, &iter);
+//         gtk_list_store_set(newStore, &iter, COLUMN_NUMBER, i+1,
+//                             COLUMN_IPADDR, addr,
+//                             COLUMN_STATUS, status,
+//                             COLUMN_SOURCE, source,
+//                             // COLUMN_ROLE, role,
+//                             -1);
+
+//         g_free(addr);
+//         g_free(status);
+//         g_free(source);
+//         // g_free(role);
+//     }
+
+
+//     newroleColumn = gtk_tree_view_get_column(GTK_TREE_VIEW(fakeHosts), 4);
+//     render = gtk_cell_renderer_combo_new();
+//     create_roles(roles); /*Заполняем список ролей*/
+
+//     g_object_set(render, "model", roles, "text-column", 0, "has-entry", FALSE,
+//                 "editable", TRUE, (char *)NULL);
+//     newroleColumn = gtk_tree_view_column_new_with_attributes("Роль", render, "text", 1, NULL);
+//     // gtk_tree_view_remove_column(GTK_TREE_VIEW(fakeHosts), 4);
+//     gtk_tree_view_append_column(GTK_TREE_VIEW(fakeHosts), newroleColumn);
+
+//     gboolean next;    
+//     int j;
+//     next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(newStore), &iter);
+
+//     while (next)
+//     {
+//         for (j = 0; j < 10; j++)
+//         { 
+//             gtk_tree_model_get(GTK_TREE_MODEL(newStore), &iter, 
+//                                                          1, &addr,
+//                                                          2, &status,
+//                                                          3, &source,
+//                                                          4, &role,
+//                                                          -1);
+//             g_print("Host #%d: addr=%s, status:%s, source:%s, role:%s \n", 
+//                 j, addr, status, source, role);
+//             g_free(addr);
+//             g_free(status);
+//             g_free(source);
+//             g_free(role);
+//             next = gtk_tree_model_iter_next(GTK_TREE_MODEL(newStore), &iter);
+//             //rowCount++;
+//         }
+//     }
+//             // gtk_tree_view_set_model(GTK_TREE_VIEW(fakeHosts), 
+//                                         // GTK_TREE_MODEL(newStore));
+//         }
+
+
