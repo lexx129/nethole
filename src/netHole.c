@@ -1,21 +1,28 @@
-#include <gtk/gtk.h>
+//#include <gtk/gtk.h>
 
 #include "netHole.h"
 
 GtkWidget       *mainWindow;
 GtkWidget       *ipSetsWindow;
 GtkWidget       *portSetsWindow;
-//GtkBuilder      *builder; 
+// GtkBuilder      *builder; 
+GtkWidget       *fhostsTree;
+GMutex          mutex_interface;
  
 int main(int argc, char *argv[])
 {    
-  
-    GtkBuilder      *builder; 
-    
     gtk_init(&argc, &argv);
+    GtkBuilder *builder;
+    // init_fakeHosts_table();
+
     builder = gtk_builder_new_from_file("glade/window_main.glade");
     mainWindow = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
+
     gtk_builder_connect_signals(builder, NULL);
+    fhostsTree = GTK_WIDGET(gtk_builder_get_object(builder, 
+                                                    "tree_fakeHosts"));
+
+    g_thread_new("background", init_fakeHosts_table, NULL);
     g_object_unref(builder);
  
     gtk_widget_show(mainWindow);                
@@ -33,6 +40,68 @@ void on_window_main_destroy()
 }
 
 
+/*
+*   Функция, вызываемая из другого потока для обновления 
+*   таблицы ложных хостов
+*/
+gboolean update_fhost_table(gpointer data) /* data - указатель на новый хост */
+{
+    g_mutex_lock(&mutex_interface); 
+    fake_host_t *new_host = data;
+    GtkTreeModel *fhostsModel;
+    GtkTreePath *path;
+    GtkTreeIter iter;
+    gboolean next;       
+    
+    /*
+    *   Сначала проверим, что лежит в полученной модели
+    */
+    fhostsModel = gtk_tree_view_get_model(fhostsTree);
+    gint i = 0;
+    if (!gtk_tree_model_get_iter_first(fhostsModel, &iter))
+    {
+        g_print("***Fake hosts' roles model is empty!***\n");
+    }
+
+    gint rows = gtk_tree_model_iter_n_children(fhostsModel, NULL); /* Получим текущее кол-во столбцов.. */
+    g_print("Now there is %d rows in a table\n", rows);
+    path = gtk_tree_path_new_from_indices(rows - 1, -1);
+    gtk_tree_model_get_iter(fhostsModel, &iter, path); /* ..чтобы получить указатель на крайний элемент */
+
+    gtk_list_store_append(GTK_LIST_STORE(fhostsModel), &iter);
+      
+    gchar status[64];
+    status_to_string(new_host->status, status); /* Переведем статус в строковый вид */
+    gchar role[32] = "Без роли";
+
+    gtk_list_store_set(GTK_LIST_STORE(fhostsModel), &iter, COLUMN_NUMBER, rows + 1,
+                                COLUMN_IPADDR, ip_ntoa(&new_host->fake_host_addr),
+                                COLUMN_STATUS, status,
+                                COLUMN_SOURCE, ip_ntoa(&new_host->source_addr),
+                                COLUMN_ROLE, role,
+                                -1); /* запишем строку с данными нового хоста */
+    
+    g_mutex_unlock(&mutex_interface);
+    return G_SOURCE_REMOVE;
+}
+
+void status_to_string(int i, gchar *result)
+{
+    // g_print("Got status %d\n ", i);
+   
+    switch (i) {
+        case IDLE:
+            sprintf(result, "Ожидание соединения");
+            break;
+        case IN_PROGRESS:
+            sprintf(result, "Идет захват");
+            break;
+        case CAPTURED:
+            sprintf(result, "Захвачен");
+            break;
+    }
+    return;
+}
 /*
 *   Обработчик кнопки настройки множеств IP-адресов
 */
@@ -204,20 +273,9 @@ void on_combobox_interface_changed(GtkComboBox *ifaces,
 }
 
 /*
-*   Названия столбцов основной таблицы с ложными хостами
-*/
-enum {
-    COLUMN_NUMBER,
-    COLUMN_IPADDR,
-    COLUMN_STATUS,
-    COLUMN_SOURCE,
-    COLUMN_ROLE
-};
-
-/*
 *   Обработчик изменения роли ложного хоста
 */
-void on_cellrenderercombo1_changed(GtkCellRendererCombo *roleCombo,
+void on_roleRenderer_changed(GtkCellRendererCombo *roleCombo,
                                 // gchar *path;
                                 GtkTreeIter *newIter,
                                 GtkListStore *rolesModel)
@@ -246,118 +304,6 @@ void on_cellrenderercombo1_changed(GtkCellRendererCombo *roleCombo,
     //     g_print("Problem when getting the iterator");
     // g_free(newrole);
     g_object_unref(model);
-}
-
-/*
-*   Несколько функций для тестового
-*   заполнения таблицы ложных хостов
-*/
-
-gchar* create_addr(int i, gboolean flag)
-{
-    gchar* result = malloc(32);
-    if (result == NULL)
-        g_print("Alloc error");
-    
-    if (flag)
-    {
-        sprintf(result, "1.1.1.%d", i); 
-    }
-    else 
-    {
-        i+=32;
-        sprintf(result, "10.10.0.%d", i);
-    }
-    return result;
-}
-
-gchar* create_status(int i)
-{
-    gchar* result = malloc(40);
-    const gchar* statuses[] = {
-        "idle", "capturing", "session_captured"
-    };
-    sprintf(result, "%s", statuses[i%3]);
-    return result;
-}
-
-/*
-*   Если ни одной роли ложных хостов
-*   не задано, нужно их создать
-*/
-void create_roles(GtkListStore *source)
-{
-    GtkTreeIter iter;
-   
-    gboolean next;
-    gint i;
-    const gchar* roles[] = {
-        "workstation", "mail-server", "file-server", "\0"
-    };
-    gchar *role;
-    i = 0;
-    /*
-    *   Сначала проверим, что лежит в полученной модели
-    */
-    next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(source), &iter);
-    if (!next)
-    {
-        g_print("***Fake hosts' roles model is empty!***\n");
-    }
-
-    while (next)
-    {
-         gtk_tree_model_get(GTK_TREE_MODEL(source), &iter, 
-                            0, &role,
-                            -1);
-            g_print("%d old role :%s \n", i, role);
-            g_free(role);
-            next = gtk_tree_model_iter_next(GTK_TREE_MODEL(source), &iter);
-            i++;
-    }   
-
-    /*
-    *   Запишем новые роли в модель
-    */
-    i = 0;
-
-    while (strcmp(roles[i], "\0"))
-    {
-        // g_print("**Started filling in the roles model**\n");
-        gtk_list_store_insert_with_values(source, &iter, -1, 0, roles[i], -1);
-        // gtk_list_store_append(source, &iter);
-        // gtk_list_store_set(source, &iter,
-        //                     0, roles[i],
-        //                     -1);
-        i++;
-    }
-
-    /*
-    *   Проверим, заполнилась ли роль
-    */
-    i = 0;
-    next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(source), &iter);
-    if (!next)
-    {
-        g_print("***Fake hosts' roles model is still empty!***\n");
-    }
-
-    while (next)
-    {
-         gtk_tree_model_get(GTK_TREE_MODEL(source), &iter, 
-                            0, &role,
-                            -1);
-            g_print("%d new role :%s \n", i, role);
-            g_free(role);
-            next = gtk_tree_model_iter_next(GTK_TREE_MODEL(source), &iter);
-            i++;
-    }
-  
-    // gchar* result = malloc(40);
-    
-    // sprintf(result, "%s", roles[i%3]);
-
-    // return result;
 }
 
 // void on_tree_fakeHosts_map(GtkWidget *fakeHosts, 
@@ -451,6 +397,7 @@ void create_roles(GtkListStore *source)
 //     }
 //             // gtk_tree_view_set_model(GTK_TREE_VIEW(fakeHosts), 
 //                                         // GTK_TREE_MODEL(newStore));
-//         }
+// }
+
 
 
