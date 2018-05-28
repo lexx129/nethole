@@ -18,16 +18,20 @@ void netHole_init(int argc, char **argv);
 
 gboolean update_fhost_table(gpointer data);
 
+gboolean update_ifaces_model(gpointer data);
+
 
 /*
 *   Названия столбцов основной таблицы с ложными хостами
 */
 typedef enum {
-    COLUMN_NUMBER,
+	COLUMN_NUMBER,
     COLUMN_IPADDR,
     COLUMN_STATUS,
     COLUMN_SOURCE,
-    COLUMN_ROLE
+    COLUMN_ROLE,
+    COLUMN_ROLETEXT,
+    COLUMN_ID
 } column_types;
 
 void status_to_string(int i, gchar *result);

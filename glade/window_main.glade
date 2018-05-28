@@ -56,17 +56,6 @@
       <!-- column-name Интерфейс -->
       <column type="gchararray"/>
     </columns>
-    <data>
-      <row>
-        <col id="0" translatable="yes">eth0</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">eth1</col>
-      </row>
-      <row>
-        <col id="0" translatable="yes">eth9</col>
-      </row>
-    </data>
   </object>
   <object class="GtkListStore" id="lstStore_roles">
     <columns>
@@ -407,32 +396,15 @@
                 <property name="column_spacing">80</property>
                 <property name="baseline_row">1</property>
                 <child>
-                  <object class="GtkLabel" id="lbl_subnet">
+                  <object class="GtkLabel" id="cmbox_interface">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_right">40</property>
                     <property name="xalign">0</property>
-                    <property name="label" translatable="yes">Подсеть:</property>
-                    <property name="justify">right</property>
+                    <property name="label" translatable="yes">Сетевой интерфейс:</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">0</property>
-                  </packing>
-                </child>
-                <child>
-                  <object class="GtkEntry" id="entry_subnet">
-                    <property name="visible">True</property>
-                    <property name="can_focus">True</property>
-                    <property name="can_default">True</property>
-                    <property name="margin_bottom">3</property>
-                    <property name="max_width_chars">16</property>
-                    <property name="placeholder_text" translatable="yes">192.168.1.0</property>
-                    <signal name="changed" handler="on_entry_subnet_changed" swapped="no"/>
-                  </object>
-                  <packing>
-                    <property name="left_attach">1</property>
-                    <property name="top_attach">0</property>
+                    <property name="top_attach">3</property>
                   </packing>
                 </child>
                 <child>
@@ -444,7 +416,7 @@
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">1</property>
+                    <property name="top_attach">2</property>
                   </packing>
                 </child>
                 <child>
@@ -454,6 +426,35 @@
                     <property name="has_focus">True</property>
                     <property name="placeholder_text" translatable="yes">/24</property>
                     <signal name="changed" handler="on_entry_netmask_changed" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">2</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkLabel" id="lbl_subnet">
+                    <property name="visible">True</property>
+                    <property name="can_focus">False</property>
+                    <property name="margin_right">40</property>
+                    <property name="xalign">0</property>
+                    <property name="label" translatable="yes">Подсеть:</property>
+                    <property name="justify">right</property>
+                  </object>
+                  <packing>
+                    <property name="left_attach">0</property>
+                    <property name="top_attach">1</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkEntry" id="entry_subnet">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="can_default">True</property>
+                    <property name="margin_bottom">3</property>
+                    <property name="max_width_chars">16</property>
+                    <property name="placeholder_text" translatable="yes">192.168.1.0</property>
+                    <signal name="changed" handler="on_entry_subnet_changed" swapped="no"/>
                   </object>
                   <packing>
                     <property name="left_attach">1</property>

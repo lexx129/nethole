@@ -3,7 +3,7 @@
 
 #ifndef NETHOLE_H
 #include "netHole.h"
-#endif
+#endif //NETHOLE_H
 // #include "structures.h"
 
 /*
@@ -52,112 +52,29 @@ fake_host_t *create_fake_host()
     return host;
 }
 
-gchar* create_addr(int i, gboolean flag)
+void get_interfaces()
 {
-    gchar* result = malloc(32);
-    if (result == NULL)
-        g_print("Alloc error");
-    
-    if (flag)
+    struct ifaddrs *addrs,*tmp;
+
+    getifaddrs(&addrs);
+    tmp = addrs;
+
+    while (tmp)
     {
-        sprintf(result, "1.1.1.%d", i); 
+        if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_PACKET){
+            printf("%s\n", tmp->ifa_name);
+
+            /*
+            *   Возможно, стоит складывать имена интерфейсов в контейнер
+            *   чтобы вызвать функцию обновления списка в форме единожды
+            */
+            g_idle_add(update_ifaces_model, (gpointer)tmp->ifa_name);
+        }
+
+        tmp = tmp->ifa_next;
     }
-    else 
-    {
-        i+=32;
-        sprintf(result, "10.10.0.%d", i);
-    }
-    return result;
+    // g_idle_add(update_ifaces_model, );
+    freeifaddrs(addrs);
 }
-
-gchar* create_status(int i)
-{
-    gchar* result = malloc(40);
-    const gchar* statuses[] = {
-        "idle", "capturing", "session_captured"
-    };
-    sprintf(result, "%s", statuses[i%3]);
-    return result;
-}
-
-/*
-*   Если ни одной роли ложных хостов
-*   не задано, нужно их создать
-*/
-// void create_roles(GtkListStore *source)
-// {
-//     GtkTreeIter iter;
-   
-//     gboolean next;
-//     gint i;
-//     const gchar* roles[] = {
-//         "workstation", "mail-server", "file-server", "\0"
-//     };
-//     gchar *role;
-//     i = 0;
-//     /*
-//     *   Сначала проверим, что лежит в полученной модели
-//     */
-//     next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(source), &iter);
-//     if (!next)
-//     {
-//         g_print("***Fake hosts' roles model is empty!***\n");
-//     }
-
-//     while (next)
-//     {
-//          gtk_tree_model_get(GTK_TREE_MODEL(source), &iter, 
-//                             0, &role,
-//                             -1);
-//             g_print("%d old role :%s \n", i, role);
-//             g_free(role);
-//             next = gtk_tree_model_iter_next(GTK_TREE_MODEL(source), &iter);
-//             i++;
-//     }   
-
-//     /*
-//     *   Запишем новые роли в модель
-//     */
-//     i = 0;
-
-//     while (strcmp(roles[i], "\0"))
-//     {
-//         // g_print("**Started filling in the roles model**\n");
-//         gtk_list_store_insert_with_values(source, &iter, -1, 0, roles[i], -1);
-//         // gtk_list_store_append(source, &iter);
-//         // gtk_list_store_set(source, &iter,
-//         //                     0, roles[i],
-//         //                     -1);
-//         i++;
-//     }
-
-//     /*
-//     *   Проверим, заполнилась ли роль
-//     */
-//     i = 0;
-//     next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(source), &iter);
-//     if (!next)
-//     {
-//         g_print("***Fake hosts' roles model is still empty!***\n");
-//     }
-
-//     while (next)
-//     {
-//          gtk_tree_model_get(GTK_TREE_MODEL(source), &iter, 
-//                             0, &role,
-//                             -1);
-//             g_print("%d new role :%s \n", i, role);
-//             g_free(role);
-//             next = gtk_tree_model_iter_next(GTK_TREE_MODEL(source), &iter);
-//             i++;
-//     }
-  
-//     // gchar* result = malloc(40);
-    
-//     // sprintf(result, "%s", roles[i%3]);
-
-//     // return result;
-// }
-
 
 

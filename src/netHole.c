@@ -7,6 +7,7 @@ GtkWidget       *ipSetsWindow;
 GtkWidget       *portSetsWindow;
 // GtkBuilder      *builder; 
 GtkWidget       *fhostsTree;
+GtkWidget       *ifacesCombo;
 GMutex          mutex_interface;
  
 int main(int argc, char *argv[])
@@ -21,8 +22,15 @@ int main(int argc, char *argv[])
     gtk_builder_connect_signals(builder, NULL);
     fhostsTree = GTK_WIDGET(gtk_builder_get_object(builder, 
                                                     "tree_fakeHosts"));
+    ifacesCombo = GTK_WIDGET(gtk_builder_get_object(builder,
+                                                    "combobox_iface"));
 
-    g_thread_new("background", init_fakeHosts_table, NULL);
+    /* 
+    *  Все, что не связано с интерфейсом напрямую, 
+    *  будет работать в другом потоке
+    */
+    g_thread_new("background", init_background, NULL);
+
     g_object_unref(builder);
  
     gtk_widget_show(mainWindow);                
@@ -31,14 +39,11 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-/* 
-*   Обработчик закрытия главного окна
+/*
+*   Сначала функции для локального обновления виджетов и 
+*   связанных с ними объектов (для вызова из других потоков). 
+*   За ними -- обработчики сигналов виджетов.
 */
-void on_window_main_destroy()
-{
-    gtk_main_quit();
-}
-
 
 /*
 *   Функция, вызываемая из другого потока для обновления 
@@ -63,22 +68,27 @@ gboolean update_fhost_table(gpointer data) /* data - указатель на н�
         g_print("***Fake hosts' roles model is empty!***\n");
     }
 
-    gint rows = gtk_tree_model_iter_n_children(fhostsModel, NULL); /* Получим текущее кол-во столбцов.. */
-    g_print("Now there is %d rows in a table\n", rows);
+    /* Получим текущее кол-во столбцов.. */
+    gint rows = gtk_tree_model_iter_n_children(fhostsModel, NULL); 
+    // g_print("Now there is %d rows in a table\n", rows);
     path = gtk_tree_path_new_from_indices(rows - 1, -1);
-    gtk_tree_model_get_iter(fhostsModel, &iter, path); /* ..чтобы получить указатель на крайний элемент */
+
+    /* ..чтобы получить указатель на крайний элемент */
+    gtk_tree_model_get_iter(fhostsModel, &iter, path); 
 
     gtk_list_store_append(GTK_LIST_STORE(fhostsModel), &iter);
       
     gchar status[64];
     status_to_string(new_host->status, status); /* Переведем статус в строковый вид */
     gchar role[32] = "Без роли";
-
-    gtk_list_store_set(GTK_LIST_STORE(fhostsModel), &iter, COLUMN_NUMBER, rows + 1,
+   
+    gtk_list_store_set(GTK_LIST_STORE(fhostsModel), &iter,
+                                COLUMN_NUMBER, rows + 1,
                                 COLUMN_IPADDR, ip_ntoa(&new_host->fake_host_addr),
                                 COLUMN_STATUS, status,
                                 COLUMN_SOURCE, ip_ntoa(&new_host->source_addr),
-                                COLUMN_ROLE, role,
+                                COLUMN_ROLETEXT, role,
+                                COLUMN_ID, new_host->id,
                                 -1); /* запишем строку с данными нового хоста */
     
     g_mutex_unlock(&mutex_interface);
@@ -91,7 +101,7 @@ void status_to_string(int i, gchar *result)
    
     switch (i) {
         case IDLE:
-            sprintf(result, "Ожидание соединения");
+            sprintf(result, "Ожидание\nсоединения");
             break;
         case IN_PROGRESS:
             sprintf(result, "Идет захват");
@@ -102,6 +112,48 @@ void status_to_string(int i, gchar *result)
     }
     return;
 }
+
+gboolean update_ifaces_model(gpointer data)
+{
+    GtkWidget *ifacesModel;
+    GtkTreePath *path;
+    GtkTreeIter iter;
+
+    g_mutex_lock(&mutex_interface); 
+
+    ifacesModel = gtk_combo_box_get_model(GTK_COMBO_BOX(ifacesCombo));
+
+    gint rows = gtk_tree_model_iter_n_children(ifacesModel, NULL);
+   // g_print("Now there is %d rows in a table\n", rows);
+    path = gtk_tree_path_new_from_indices(rows - 1, -1);
+    if (gtk_tree_path_get_depth(path) > 0)
+        gtk_tree_model_get_iter(ifacesModel, &iter, path); 
+    else
+        gtk_tree_model_get_iter_first(ifacesModel, &iter);
+
+    gtk_list_store_append(GTK_LIST_STORE(ifacesModel), &iter);
+
+    gtk_list_store_set(GTK_LIST_STORE(ifacesModel), &iter, 0, (gchar*) data, -1); 
+    
+    g_mutex_unlock(&mutex_interface);
+
+    return G_SOURCE_REMOVE;
+}
+
+
+
+/***********************
+        Обработчики
+***********************/
+
+/* 
+*   Обработчик закрытия главного окна
+*/
+void on_window_main_destroy()
+{
+    gtk_main_quit();
+}
+
 /*
 *   Обработчик кнопки настройки множеств IP-адресов
 */

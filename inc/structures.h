@@ -39,6 +39,10 @@ typedef enum
 
 } statuses;
 
+/* 
+*	Наборы портов являются частью ролевого разбиения хостов
+*	Установка и учет ролей пока не реализован
+*/
 struct fake_port_s {
   	char      name[FP_NAME_LENGTH];
   	uint16_t  port_number;
@@ -57,6 +61,7 @@ typedef struct fake_port_set_s fake_ports_set;
 /*! Representation of a fake host */
 
 struct fake_host_s {
+	uint16_t	id;
 	ip_addr_t   fake_host_addr;
  	eth_addr_t  fake_host_mac;
   	statuses    status;
