@@ -93,47 +93,27 @@
         <property name="tab_pos">left</property>
         <property name="group_name">menus_list</property>
         <child>
-          <object class="GtkBox" id="box_hostsStats">
+          <object class="GtkGrid" id="grid_fhosts">
             <property name="visible">True</property>
             <property name="can_focus">False</property>
-            <property name="orientation">vertical</property>
-            <property name="spacing">2</property>
-            <child>
-              <object class="GtkLabel" id="lbl_hostsTab">
-                <property name="visible">True</property>
-                <property name="can_focus">False</property>
-                <property name="xalign">0.0099999997764825821</property>
-                <property name="ypad">5</property>
-                <property name="label" translatable="yes">Статистика по хостам</property>
-                <attributes>
-                  <attribute name="style" value="oblique"/>
-                  <attribute name="weight" value="heavy"/>
-                  <attribute name="scale" value="2"/>
-                </attributes>
-              </object>
-              <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">0</property>
-              </packing>
-            </child>
+            <property name="row_spacing">3</property>
+            <property name="column_spacing">1</property>
+            <property name="column_homogeneous">True</property>
             <child>
               <object class="GtkSeparator" id="separator2">
                 <property name="visible">True</property>
                 <property name="can_focus">False</property>
               </object>
               <packing>
-                <property name="expand">False</property>
-                <property name="fill">True</property>
-                <property name="position">1</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">1</property>
+                <property name="width">2</property>
               </packing>
             </child>
             <child>
               <object class="GtkScrolledWindow" id="scrlWindow_fakeHosts">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
-                <property name="margin_left">5</property>
-                <property name="margin_right">5</property>
                 <property name="margin_top">6</property>
                 <property name="shadow_type">in</property>
                 <property name="min_content_height">400</property>
@@ -142,9 +122,10 @@
                   <object class="GtkTreeView" id="tree_fakeHosts">
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
+                    <property name="margin_bottom">5</property>
                     <property name="model">lstStore_fakeHosts</property>
                     <property name="headers_clickable">False</property>
-                    <signal name="map" handler="on_tree_fakeHosts_map" object="lstStore_roles" swapped="no"/>
+                    <property name="search_column">0</property>
                     <child internal-child="selection">
                       <object class="GtkTreeSelection" id="treeview-selection"/>
                     </child>
@@ -229,12 +210,53 @@
                 </child>
               </object>
               <packing>
-                <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
+                <property name="left_attach">0</property>
+                <property name="top_attach">2</property>
+                <property name="width">2</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_hostsTab">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="xalign">0.0099999997764825821</property>
+                <property name="ypad">5</property>
+                <property name="label" translatable="yes">Статистика по хостам</property>
+                <attributes>
+                  <attribute name="style" value="oblique"/>
+                  <attribute name="weight" value="heavy"/>
+                  <attribute name="scale" value="2"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">0</property>
+                <property name="top_attach">0</property>
+              </packing>
+            </child>
+            <child>
+              <object class="GtkLabel" id="lbl_mainStatus">
+                <property name="visible">True</property>
+                <property name="can_focus">False</property>
+                <property name="halign">end</property>
+                <property name="valign">center</property>
+                <property name="margin_right">5</property>
+                <property name="label" translatable="yes">Статус ловушки: остановлена</property>
+                <attributes>
+                  <attribute name="font-desc" value="Monospace 10"/>
+                  <attribute name="weight" value="bold"/>
+                  <attribute name="variant" value="normal"/>
+                  <attribute name="scale" value="1"/>
+                </attributes>
+              </object>
+              <packing>
+                <property name="left_attach">1</property>
+                <property name="top_attach">0</property>
               </packing>
             </child>
           </object>
+          <packing>
+            <property name="tab_expand">True</property>
+          </packing>
         </child>
         <child type="tab">
           <object class="GtkLabel" id="lbl_mainMenuTab">
@@ -289,6 +311,18 @@
               </packing>
             </child>
             <child>
+              <object class="GtkStackSwitcher" id="switcher">
+                <property name="visible">True</property>
+                <property name="stack">stack</property>
+                <property name="halign">center</property>
+              </object>
+              <packing>
+                <property name="expand">False</property>
+                <property name="fill">True</property>
+                <property name="position">1</property>
+              </packing>
+            </child>
+            <child>
               <object class="GtkStack" id="stack">
                 <property name="visible">True</property>
                 <property name="can_focus">True</property>
@@ -332,18 +366,6 @@
               </object>
               <packing>
                 <property name="expand">True</property>
-                <property name="fill">True</property>
-                <property name="position">2</property>
-              </packing>
-            </child>
-            <child>
-              <object class="GtkStackSwitcher" id="switcher">
-                <property name="visible">True</property>
-                <property name="stack">stack</property>
-                <property name="halign">center</property>
-              </object>
-              <packing>
-                <property name="expand">False</property>
                 <property name="fill">True</property>
                 <property name="position">2</property>
               </packing>
@@ -439,24 +461,22 @@
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkLabel" id="cmbox_interface">
+                  <object class="GtkLabel" id="label4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="xalign">0</property>
-                    <property name="label" translatable="yes">Сетевой интерфейс:</property>
+                    <property name="label" translatable="yes">Включить ловушку</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">0</property>
                   </packing>
                 </child>
                 <child>
-                  <object class="GtkComboBox" id="combobox_interface">
+                  <object class="GtkComboBox" id="combobox_iface">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
                     <property name="model">lstStore_ifaces</property>
-                    <signal name="changed" handler="on_combobox_interface_changed" object="lstStore_ifaces" swapped="no"/>
-                    <signal name="map" handler="on_combobox_interface_map" object="lstStore_ifaces" swapped="no"/>
+                    <signal name="changed" handler="on_combobox_iface_changed" object="lstStore_ifaces" swapped="no"/>
                     <child>
                       <object class="GtkCellRendererText" id="cellrenderertext1"/>
                       <attributes>
@@ -466,7 +486,19 @@
                   </object>
                   <packing>
                     <property name="left_attach">1</property>
-                    <property name="top_attach">2</property>
+                    <property name="top_attach">3</property>
+                  </packing>
+                </child>
+                <child>
+                  <object class="GtkSwitch" id="switch_main">
+                    <property name="visible">True</property>
+                    <property name="can_focus">True</property>
+                    <property name="halign">center</property>
+                    <signal name="state-set" handler="on_switch_main_state_set" object="lbl_mainStatus" swapped="no"/>
+                  </object>
+                  <packing>
+                    <property name="left_attach">1</property>
+                    <property name="top_attach">0</property>
                   </packing>
                 </child>
               </object>

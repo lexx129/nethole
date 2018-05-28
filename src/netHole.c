@@ -191,6 +191,15 @@ void on_entry_netmask_changed(GtkEditable *subnetEntry)
     g_free(contents);
 }
 
+void on_switch_main_state_set(GtkSwitch *widget, gboolean state,
+                                GtkLabel *status)
+{
+    if (state)
+        gtk_label_set_text(status, "Статус ловушки: активна");
+    else
+        gtk_label_set_text(status, "Статус ловушки: остановлена");
+}
+
 /*
 *   Настройки - Ловушка - Размер окна
 */
@@ -210,50 +219,13 @@ void on_scl_tapitActivity_value_changed(GtkRange *tarpitActivity)
     GtkAdjustment *adj;
     adj = gtk_range_get_adjustment(tarpitActivity);
     value = gtk_adjustment_get_value(adj);
-    g_print("New tarpitActivity = %d %\n", value);
-}
-
-/*
-*   Обработчик, который получает список сетевых интерфейсов
-*   для комбобокса при отрисовке вкладки с настройками
-*/
-void on_combobox_interface_map(GtkWidget *interfaces,
-                                GtkListStore *ifacesModel)
-{
-    
-    // GtkTreeStore *ifacesModel;
-    GtkTreeIter iter;
-    gboolean next;
-    gchar *ifaceName;
-    gint rowCount;
-    gchar *path;
-
-    //  ifacesModel = gtk_combo_box_get_model(GTK_COMBO_BOX(interfaces));
-   
-    /*проверка, заполнен уже список или нет*/
-    next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(ifacesModel), &iter);
-
-    /*итератор не установился -> список не заполнен*/
-    if(!next){
-    /*тут будет код, 
-            получающий список сетевых устройств*/    
-    }
-
-    while (next)
-    {
-        gtk_tree_model_get(GTK_TREE_MODEL(ifacesModel), &iter, 0, &ifaceName, -1);
-        g_print("IFace #%d name: %s\n", rowCount, ifaceName);
-        g_free(ifaceName);
-        next = gtk_tree_model_iter_next(GTK_TREE_MODEL(ifacesModel), &iter);
-        rowCount++;
-    }
-    
+    g_print("New tarpitActivity = %d \n", value);
 }
 
 /*
 *   Настройки - Общие - Сетевой интерфейс
 */
-void on_combobox_interface_changed(GtkComboBox *ifaces,
+void on_combobox_iface_changed(GtkComboBox *ifaces,
                                     GtkListStore *ifacesModel)
 {
     GtkTreeIter iter;
@@ -276,7 +248,6 @@ void on_combobox_interface_changed(GtkComboBox *ifaces,
 *   Обработчик изменения роли ложного хоста
 */
 void on_roleRenderer_changed(GtkCellRendererCombo *roleCombo,
-                                // gchar *path;
                                 GtkTreeIter *newIter,
                                 GtkListStore *rolesModel)
 {
