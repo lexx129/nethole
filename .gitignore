@@ -2,3 +2,9 @@
 backup/
 
 *.o
+
+*.glade#
+
+*.glade~
+
+netHole-gtk3

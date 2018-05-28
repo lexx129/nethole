@@ -11,6 +11,7 @@ OPT=-O0
 WARN=-Wall
  
 PTHREAD=-pthread
+RDYN = -rdynamic
 DNET=-ldnet
 GTKLIB=`pkg-config --cflags --libs gtk+-3.0`
  
@@ -21,7 +22,7 @@ AM_CPPFLAGS=-I./inc -I/usr/local/include -I/usr/include/pcap
  
 # linker
 LD=gcc
-LDFLAGS=$(PTHREAD) $(GTKLIB) $(DNET) -lX11 -export-dynamic 
+LDFLAGS= $(RDYN) $(DEBUG) $(PTHREAD) $(GTKLIB) $(DNET) -lX11 -export-dynamic
 
 SOURCES=src/main.c src/netHole.c src/temp_utils.c
 

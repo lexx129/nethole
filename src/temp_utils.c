@@ -118,3 +118,17 @@ void get_interfaces()
 }
 
 
+/* 
+*   Будет вызываться для удаления хоста из 
+*   фонового списка и из модели интерфейса
+*/
+void delete_fhost(uint16_t id)
+{
+    g_print("Got to the background! Processing...\n");
+    fake_host_t *iter;
+    LIST_FOREACH(iter, &fake_hosts, host_next){
+        if (iter->id == id)
+            g_print("Gonna delete host with ID: %d\nIP: %s", 
+                    iter->id, ip_ntoa(&iter->fake_host_addr));
+    }
+}

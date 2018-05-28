@@ -3,6 +3,7 @@
 #include "netHole.h"
 
 GtkWidget       *mainWindow;
+GtkWidget       *additWindow;
 GtkWidget       *ipSetsWindow;
 GtkWidget       *portSetsWindow;
 // GtkBuilder      *builder; 
@@ -18,6 +19,7 @@ int main(int argc, char *argv[])
 
     builder = gtk_builder_new_from_file("glade/window_main.glade");
     mainWindow = GTK_WIDGET(gtk_builder_get_object(builder, "window_main"));
+    additWindow = GTK_WIDGET(gtk_builder_get_object(builder, "window_additional"));
 
     gtk_builder_connect_signals(builder, NULL);
     fhostsTree = GTK_WIDGET(gtk_builder_get_object(builder, 
@@ -33,7 +35,9 @@ int main(int argc, char *argv[])
 
     g_object_unref(builder);
  
-    gtk_widget_show(mainWindow);                
+    gtk_widget_show(additWindow);
+    gtk_widget_show(mainWindow);      
+
     gtk_main();
  
     return 0;
@@ -327,6 +331,38 @@ void on_roleRenderer_changed(GtkCellRendererCombo *roleCombo,
     //     g_print("Problem when getting the iterator");
     // g_free(newrole);
     g_object_unref(model);
+}
+
+void on_button_deleteHost_clicked(GtkButton *button, 
+                                    gpointer data)
+{
+    GtkTreeSelection    *selection;
+    GtkTreeModel        *fhostsModel;
+    GList               *selected;
+    GtkTreeIter         iter;
+
+    GtkTreeView *fhostsView = (GtkTreeView*)data;
+
+    selection = gtk_tree_view_get_selection(fhostsView);
+    fhostsModel = gtk_tree_view_get_model(fhostsView);
+
+    /* получим GList с путями до выделенных элементов */
+    selected = gtk_tree_selection_get_selected_rows(selection, 
+                                        &fhostsModel);
+
+    GList *curr;
+    for (curr = selected; curr != NULL; curr = curr->next)
+    {  
+        uint16_t curr_id;
+        gtk_tree_model_get_iter(fhostsModel, &iter, curr->data);
+        gtk_tree_model_get(fhostsModel, &iter, 
+                            COLUMN_ID, &curr_id, -1);
+        g_print("Delete button is clicked.\nGonna delete host with id %d\n", curr_id);
+        delete_fhost(curr_id);
+    }
+
+
+
 }
 
 // void on_tree_fakeHosts_map(GtkWidget *fakeHosts, 
