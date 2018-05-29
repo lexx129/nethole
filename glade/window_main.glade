@@ -28,7 +28,7 @@
       <column type="gchararray"/>
       <!-- column-name Статус -->
       <column type="gchararray"/>
-      <!-- column-name Источник соединения -->
+      <!-- column-name Источник -->
       <column type="gchararray"/>
       <!-- column-name Роль -->
       <column type="gchararray"/>
@@ -37,27 +37,6 @@
       <!-- column-name id -->
       <column type="guint"/>
     </columns>
-    <data>
-      <row>
-        <col id="0">1</col>
-        <col id="1" translatable="yes">1.1.1.100</col>
-        <col id="2" translatable="yes">Захвачен</col>
-        <col id="3" translatable="yes">10.0.0.100</col>
-        <col id="4" translatable="yes"/>
-        <col id="5" translatable="yes"/>
-        <col id="6">0</col>
-      </row>
-      <row>
-        <col id="0">2</col>
-        <col id="1" translatable="yes">1.1.1.2</col>
-        <col id="2">Ожидание 
-соединения</col>
-        <col id="3" translatable="yes">212.193.10.4</col>
-        <col id="4" translatable="yes"/>
-        <col id="5" translatable="yes"/>
-        <col id="6">0</col>
-      </row>
-    </data>
   </object>
   <object class="GtkListStore" id="lstStore_ifaces">
     <columns>
@@ -996,6 +975,49 @@
           <packing>
             <property name="position">2</property>
             <property name="tab_fill">False</property>
+          </packing>
+        </child>
+      </object>
+    </child>
+  </object>
+  <object class="GtkWindow" id="window_additional">
+    <property name="can_focus">False</property>
+    <property name="resizable">False</property>
+    <property name="destroy_with_parent">True</property>
+    <property name="urgency_hint">True</property>
+    <property name="deletable">False</property>
+    <property name="gravity">north-east</property>
+    <child>
+      <object class="GtkBox" id="box1">
+        <property name="visible">True</property>
+        <property name="can_focus">False</property>
+        <property name="orientation">vertical</property>
+        <child>
+          <object class="GtkButton" id="button_delRandHost">
+            <property name="label" translatable="yes">Удалить случайный хост</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_button_delRandHost_clicked" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">0</property>
+          </packing>
+        </child>
+        <child>
+          <object class="GtkButton" id="button_delSelectedHost">
+            <property name="label" translatable="yes">Удалить выделенный хост</property>
+            <property name="visible">True</property>
+            <property name="can_focus">True</property>
+            <property name="receives_default">True</property>
+            <signal name="clicked" handler="on_button_delSelectedHost_clicked" object="tree_fakeHosts" swapped="no"/>
+          </object>
+          <packing>
+            <property name="expand">False</property>
+            <property name="fill">True</property>
+            <property name="position">1</property>
           </packing>
         </child>
       </object>

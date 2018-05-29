@@ -16,7 +16,9 @@ GtkWidget       *portSetsWindow;
 
 void netHole_init(int argc, char **argv);
 
-gboolean update_fhost_table(gpointer data);
+gboolean ui_add_fhost(gpointer data);
+
+gboolean ui_delete_fhost(gpointer data);
 
 gboolean update_ifaces_model(gpointer data);
 

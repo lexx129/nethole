@@ -53,32 +53,24 @@ int main(int argc, char *argv[])
 *   Функция, вызываемая из другого потока для обновления 
 *   таблицы ложных хостов
 */
-gboolean update_fhost_table(gpointer data) /* data - указатель на новый хост */
+gboolean ui_add_fhost(gpointer data) /* data - указатель на новый хост */
 {
     g_mutex_lock(&mutex_interface); 
     fake_host_t *new_host = data;
     GtkTreeModel *fhostsModel;
     GtkTreePath *path;
     GtkTreeIter iter;
-    gboolean next;       
     
-    /*
-    *   Сначала проверим, что лежит в полученной модели
-    */
-    fhostsModel = gtk_tree_view_get_model(fhostsTree);
-    gint i = 0;
-    if (!gtk_tree_model_get_iter_first(fhostsModel, &iter))
-    {
-        g_print("***Fake hosts' roles model is empty!***\n");
-    }
-
-    /* Получим текущее кол-во столбцов.. */
+    fhostsModel = gtk_tree_view_get_model(GTK_TREE_VIEW(fhostsTree));
+   
+    /* Получим текущее кол-во записей.. */
     gint rows = gtk_tree_model_iter_n_children(fhostsModel, NULL); 
-    // g_print("Now there is %d rows in a table\n", rows);
     path = gtk_tree_path_new_from_indices(rows - 1, -1);
 
-    /* ..чтобы получить указатель на крайний элемент */
-    gtk_tree_model_get_iter(fhostsModel, &iter, path); 
+    if (gtk_tree_path_get_depth(path) == 0) /* Если таблица пуста, */
+        gtk_tree_model_get_iter_first(fhostsModel, &iter); /* запросим указатель на первую строку */
+    else
+        gtk_tree_model_get_iter(fhostsModel, &iter, path); /* иначе -- на последнюю запись*/
 
     gtk_list_store_append(GTK_LIST_STORE(fhostsModel), &iter);
       
@@ -95,6 +87,47 @@ gboolean update_fhost_table(gpointer data) /* data - указатель на н�
                                 COLUMN_ID, new_host->id,
                                 -1); /* запишем строку с данными нового хоста */
     
+    g_mutex_unlock(&mutex_interface);
+    return G_SOURCE_REMOVE;
+}
+
+gboolean ui_delete_fhost(gpointer data)
+{
+    fake_host_t *to_delete = (fake_host_t*)data;
+    GtkTreeModel *fhostsModel;
+    GtkTreeIter iter;
+    gboolean next;
+
+    int number;
+    uint16_t curr_id;
+
+    g_mutex_lock(&mutex_interface); 
+    fhostsModel = gtk_tree_view_get_model(GTK_TREE_VIEW(fhostsTree));
+    next = gtk_tree_model_get_iter_first(fhostsModel, &iter);
+    if (!next){
+        g_print("**Couldn't get fake hosts model**\n");
+    }
+    while (next)
+    {   
+    /* Нельзя вычитать только айди, вычитываем первый стоблик за компанию */     
+        gtk_tree_model_get(fhostsModel, &iter, COLUMN_NUMBER, &number,
+                            COLUMN_ID, &curr_id, -1);
+        // g_print("Processing %d row with id = %d\n", number, curr_id);
+        if (curr_id == to_delete->id){
+            if (gtk_list_store_remove(GTK_LIST_STORE(fhostsModel), &iter)){
+                g_print("Have to delete host with id %d\n \
+                    Deleted fhost with id %d\n", to_delete->id, curr_id);
+                next = FALSE;
+                break;
+            }
+            else
+                g_print("Unable to delete given row\n");
+        } else
+            // g_free(curr_id);
+            next = gtk_tree_model_iter_next(fhostsModel, &iter);
+        
+
+    }
     g_mutex_unlock(&mutex_interface);
     return G_SOURCE_REMOVE;
 }
@@ -119,7 +152,7 @@ void status_to_string(int i, gchar *result)
 
 gboolean update_ifaces_model(gpointer data)
 {
-    GtkWidget *ifacesModel;
+    GtkTreeModel *ifacesModel;
     GtkTreePath *path;
     GtkTreeIter iter;
 
@@ -163,26 +196,16 @@ void on_window_main_destroy()
 */
 void on_btn_changeIpAddrSet_clicked()
 {
-    if (gtk_widget_get_realized(ipSetsWindow))
-        gtk_window_present(GTK_WINDOW(ipSetsWindow));
+    if (gtk_widget_get_realized(ipSetsWindow)) /* Если окно уже отрисовано.. */
+        gtk_window_present(GTK_WINDOW(ipSetsWindow)); /* .. поместим его поверх остальных */
     else {    
-    
-        // if (gtk_window_is_active(GTK_WINDOW(ipSetsWindow)))
-        //     printf("%s\n", "window is active");
-        // else printf("%s\n", "window is not active");
-
         GtkBuilder      *builder; 
-                  
+
         builder = gtk_builder_new_from_file("glade/window_ipSets.glade");
-
-        // builder = gtk_builder_new();
-        // gtk_builder_add_from_file (builder, "glade/window_ipSets.glade", NULL);
-
         ipSetsWindow = GTK_WIDGET(gtk_builder_get_object(builder, "window_ipAddrSets"));
             
         gtk_builder_connect_signals(builder, NULL);
         g_object_unref(builder);
-             
         gtk_widget_show(ipSetsWindow);    
     }
 }
@@ -193,7 +216,7 @@ void on_btn_changeIpAddrSet_clicked()
 void on_btn_changePortsSet_clicked()
 {
 
-    /*проверяем, отрисовывалось ли уже это окно */
+    /* проверяем, отрисовывалось ли уже это окно */
     if (gtk_widget_get_realized(portSetsWindow))         
         gtk_window_present(GTK_WINDOW(portSetsWindow));
     else
@@ -230,8 +253,6 @@ void on_window_portSets_destroy()
 */
 void on_entry_subnet_changed(GtkEditable *subnetEntry)
 {
-   
-    // printf("%s\n", "Callback!");
     gchar *contents = gtk_editable_get_chars(subnetEntry, 0, -1);
     g_print("New subnet: %s\n", contents);
     g_free(contents);
@@ -247,6 +268,7 @@ void on_entry_netmask_changed(GtkEditable *subnetEntry)
     g_free(contents);
 }
 
+/* Настройки - Включить ловушку */
 void on_switch_main_state_set(GtkSwitch *widget, gboolean state,
                                 GtkLabel *status)
 {
@@ -296,44 +318,45 @@ void on_combobox_iface_changed(GtkComboBox *ifaces,
         g_free(ifaceName);
     }
     else
-        g_print("Didn't got iterator :(");
+        g_print("Could't get iface combobox iterator");
 
 }
 
 /*
 *   Обработчик изменения роли ложного хоста
 */
-void on_roleRenderer_changed(GtkCellRendererCombo *roleCombo,
-                                GtkTreeIter *newIter,
-                                GtkListStore *rolesModel)
-{
-    GtkListStore *model;
-    gboolean next;
-    gchar *newrole;
-    gint n;
+// void on_roleRenderer_changed(GtkCellRendererCombo *roleCombo,
+//                                 GtkTreeIter *newIter,
+//                                 GtkListStore *rolesModel)
+// {
+//     GtkListStore *model;
+//     gboolean next;
+//     gchar *newrole;
+//     gint n;
 
-    // next = gtk_tree_model_get_iter(GTK_TREE_MODEL(rolesModel), newIter);
-    // if (next){
-    g_print("Pointed model size: %d\n", sizeof(*rolesModel));
-    g_object_get(roleCombo, "model", &model, NULL);
-    g_print("Fetched model size: %d\n", sizeof(*model));
-    g_print("Iter size: %d\n", sizeof(*newIter));
-    if (newIter != NULL)
-    {
-        gtk_tree_model_get(GTK_TREE_MODEL(rolesModel), newIter, 0, &newrole, -1);
-        g_print("Selected role: %s\n", newrole);
-    }
-    else g_print("iter is empty");
+//     // next = gtk_tree_model_get_iter(GTK_TREE_MODEL(rolesModel), newIter);
+//     // if (next){
+//     g_print("Pointed model size: %d\n", sizeof(*rolesModel));
+//     g_object_get(roleCombo, "model", &model, NULL);
+//     g_print("Fetched model size: %d\n", sizeof(*model));
+//     g_print("Iter size: %d\n", sizeof(*newIter));
+//     if (newIter != NULL)
+//     {
+//         gtk_tree_model_get(GTK_TREE_MODEL(rolesModel), newIter, 0, &newrole, -1);
+//         g_print("Selected role: %s\n", newrole);
+//     }
+//     else g_print("iter is empty");
 
 
-    // }
-    // else
-    //     g_print("Problem when getting the iterator");
-    // g_free(newrole);
-    g_object_unref(model);
-}
+//     // }
+//     // else
+//     //     g_print("Problem when getting the iterator");
+//     // g_free(newrole);
+//     g_object_unref(model);
+// }
 
-void on_button_deleteHost_clicked(GtkButton *button, 
+/* Обработчик кнопки тестового удаления выбранного хоста из таблицы */
+void on_button_delSelectedHost_clicked(GtkButton *button, 
                                     gpointer data)
 {
     GtkTreeSelection    *selection;
@@ -358,105 +381,12 @@ void on_button_deleteHost_clicked(GtkButton *button,
         gtk_tree_model_get(fhostsModel, &iter, 
                             COLUMN_ID, &curr_id, -1);
         g_print("Delete button is clicked.\nGonna delete host with id %d\n", curr_id);
-        delete_fhost(curr_id);
+        delete_selected_fhost(curr_id);
     }
-
-
-
 }
 
-// void on_tree_fakeHosts_map(GtkWidget *fakeHosts, 
-//                             GtkListStore *roles)
-// {
-//     GtkListStore *newStore;
-//     GtkTreeViewColumn *newroleColumn;
-//     GtkTreeIter iter;
-//     gint columnNumber;
-//     int i;   
-
-//     GtkCellRenderer *render; 
-
-//     newStore = gtk_list_store_new(5, 
-//                                     G_TYPE_INT,
-//                                     G_TYPE_STRING,
-//                                     G_TYPE_STRING,
-//                                     G_TYPE_STRING,
-//                                     G_TYPE_STRING);
-//     // roles = gtk_list_store_new(1,
-//     //                             G_TYPE_STRING);
-
-//     gchar *addr;
-//     gchar *status;
-//     gchar *source;
-//     gchar *role;
-
-//     /*
-//     *   Создаем новые записи для таблицы ложных хостов
-//     */
-
-//     for (i = 0; i < 10; i++)
-//     {
-//         addr = create_addr(i, TRUE);
-//         // g_print("%d. Addr is %s\n", i, addr);
-//         status = create_status(i);
-//         // g_print("%d. Status is %s\n", i, status);
-//         source = create_addr(i, FALSE);
-//         // g_print("%d. Source addr is %s\n", i,  source);
-//         // role = create_role(i);
-//         // g_print("%d. Role is %s\n*****\n", i, role);
-
-//         gtk_list_store_append(newStore, &iter);
-//         gtk_list_store_set(newStore, &iter, COLUMN_NUMBER, i+1,
-//                             COLUMN_IPADDR, addr,
-//                             COLUMN_STATUS, status,
-//                             COLUMN_SOURCE, source,
-//                             // COLUMN_ROLE, role,
-//                             -1);
-
-//         g_free(addr);
-//         g_free(status);
-//         g_free(source);
-//         // g_free(role);
-//     }
-
-
-//     newroleColumn = gtk_tree_view_get_column(GTK_TREE_VIEW(fakeHosts), 4);
-//     render = gtk_cell_renderer_combo_new();
-//     create_roles(roles); /*Заполняем список ролей*/
-
-//     g_object_set(render, "model", roles, "text-column", 0, "has-entry", FALSE,
-//                 "editable", TRUE, (char *)NULL);
-//     newroleColumn = gtk_tree_view_column_new_with_attributes("Роль", render, "text", 1, NULL);
-//     // gtk_tree_view_remove_column(GTK_TREE_VIEW(fakeHosts), 4);
-//     gtk_tree_view_append_column(GTK_TREE_VIEW(fakeHosts), newroleColumn);
-
-//     gboolean next;    
-//     int j;
-//     next = gtk_tree_model_get_iter_first(GTK_TREE_MODEL(newStore), &iter);
-
-//     while (next)
-//     {
-//         for (j = 0; j < 10; j++)
-//         { 
-//             gtk_tree_model_get(GTK_TREE_MODEL(newStore), &iter, 
-//                                                          1, &addr,
-//                                                          2, &status,
-//                                                          3, &source,
-//                                                          4, &role,
-//                                                          -1);
-//             g_print("Host #%d: addr=%s, status:%s, source:%s, role:%s \n", 
-//                 j, addr, status, source, role);
-//             g_free(addr);
-//             g_free(status);
-//             g_free(source);
-//             g_free(role);
-//             next = gtk_tree_model_iter_next(GTK_TREE_MODEL(newStore), &iter);
-//             //rowCount++;
-//         }
-//     }
-//             // gtk_tree_view_set_model(GTK_TREE_VIEW(fakeHosts), 
-//                                         // GTK_TREE_MODEL(newStore));
-// }
-
-
+void on_button_delRandHost_clicked()
+{
+    delete_random_fhost();
+}
 

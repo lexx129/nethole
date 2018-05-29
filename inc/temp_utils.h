@@ -12,9 +12,10 @@
 
 #include "structures.h"
 
-
+#define MAX_RHOSTS_TO_GENERATE 	50;
 
 rand_t      *rand;
+uint8_t		fhosts_amount;
 
 gchar* create_addr(int i, gboolean flag);
 
@@ -29,5 +30,9 @@ gpointer init_fakeHosts_table();
 fake_host_t *create_fake_host();
 
 void get_interfaces();
+
+void delete_random_fhost();
+
+void delete_selected_fhost(uint16_t id);
 
 #endif //UTILS_H
