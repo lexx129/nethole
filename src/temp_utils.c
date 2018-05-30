@@ -65,10 +65,10 @@ gpointer init_fakeHosts_table()
     LIST_FOREACH(iter, &fake_hosts, host_next) {
         g_idle_add(ui_add_fhost, iter);
 
-        g_print("Generated %d host.\nID: %d\n IP: %s\nMAC: %s\n \
-Status: %d\nSource: %s\n****\n", i, iter->id,
-                ip_ntoa(&iter->fake_host_addr), eth_ntoa(&iter->fake_host_mac),
-                iter->status, ip_ntoa(&iter->source_addr));
+//         g_print("Generated %d host.\nID: %d\n IP: %s\nMAC: %s\n \
+// Status: %d\nSource: %s\n****\n", i, iter->id,
+//                 ip_ntoa(&iter->fake_host_addr), eth_ntoa(&iter->fake_host_mac),
+//                 iter->status, ip_ntoa(&iter->source_addr));
         i++;
     }
     return NULL;
@@ -153,4 +153,13 @@ void delete_selected_fhost(uint16_t id)
             g_print("Gonna delete host with ID: %d\nIP: %s", 
                     iter->id, ip_ntoa(&iter->fake_host_addr));
     }
+}
+
+/* 
+*   Заготовка функции для проверки идентичности
+*   содержимого списков ложных хостов
+*   интерфейсного и фонового потоков
+*/
+gboolean check_fhost_containers(){
+
 }

@@ -2,6 +2,7 @@
 #define NETHOLE_H
 
 #include <gtk/gtk.h>
+#include <getopt.h>
 // #include <gdk/gdk.h>
 #ifndef STR_H
 #include "structures.h"
@@ -9,6 +10,8 @@
 #ifndef UTILS_H
 #include "temp_utils.h"
 #endif
+
+#define BUFSIZE 1024   /* General character buffer size */
 
 GtkWidget       *mainWindow;
 GtkWidget       *ipSetsWindow;
@@ -37,5 +40,7 @@ typedef enum {
 } column_types;
 
 void status_to_string(int i, gchar *result);
+
+GtkWidget* getChild(gchar *to_find, GtkContainer *parent);
 
 #endif //(NETHOLE_H)

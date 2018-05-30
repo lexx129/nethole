@@ -13,8 +13,10 @@ GMutex          mutex_interface;
  
 int main(int argc, char *argv[])
 {    
-    gtk_init(&argc, &argv);
     GtkBuilder *builder;
+
+    gtk_init(&argc, &argv);
+    
     // init_fakeHosts_table();
 
     builder = gtk_builder_new_from_file("glade/window_main.glade");
@@ -26,10 +28,10 @@ int main(int argc, char *argv[])
                                                     "tree_fakeHosts"));
     ifacesCombo = GTK_WIDGET(gtk_builder_get_object(builder,
                                                     "combobox_iface"));
-
+    netHole_init(argc, argv);
     /* 
     *  Все, что не связано с интерфейсом напрямую, 
-    *  будет работать в другом потоке
+    *  будет работать в другом потоке -- фоновом
     */
     g_thread_new("background", init_background, NULL);
 
@@ -48,6 +50,142 @@ int main(int argc, char *argv[])
 *   связанных с ними объектов (для вызова из других потоков). 
 *   За ними -- обработчики сигналов виджетов.
 */
+
+static int
+read_number (u_char *p)
+{
+  char buf[BUFSIZE]="";
+  char *invalid = NULL;
+  int result = 0;
+
+  strlcpy(buf, p, sizeof(buf));     /* Copy, watching for buffer overflow */
+  result = strtol(buf, &invalid, 10); /* Convert to integer, checking validity */
+  if ((strlen(invalid) > 0) || (result < 0)) {
+    strlcpy(buf, invalid, sizeof(buf));
+    // warnx("*** Invalid integer input: %s", buf);
+    // input_error = TRUE;
+  }
+  return(result);
+}
+
+void netHole_init(int argc, char** argv)
+{
+
+    int option_index = 0;    /* Option index */  
+    int usernet = FALSE;    /* True if user-specified subnet for capturing */
+    char subnet[BUFSIZE]="";
+    char netmask[BUFSIZE]="";
+    char dev[BUFSIZE]="";       /* Input device name */
+    uint32_t throttlesize;
+    gboolean isHardCapture = FALSE;
+    gboolean isRandWindow = FALSE;
+
+    int c = 0;         /* Index for getopt */
+
+
+    static struct option long_options[] =
+    {
+      {"network",           required_argument,  0, 'n'},
+      {"mask",              required_argument,  0, 'm'},
+      {"device",                required_argument,  0, 'i'},
+      {"throttle-size",             required_argument,  0, 't'},
+      {"arp-timeout",               required_argument,  0, 'r'},
+      {"exclude-resolvable-ips",        no_argument,        0, 'X'},
+      {"disable-capture",       no_argument,        0, 'x'},
+      {"hard-capture",              no_argument,        0, 'h'},
+      {"auto-hard-capture",         no_argument,        0, 'H'},
+      {"persist-mode-only",         no_argument,        0, 'P'},
+      {"no-resp-synack",            no_argument,        0, 'a'},
+      {"no-resp-excluded-ports",        no_argument,        0, 'f'},
+      {"rand-mac",          required_argument,  0, 'M'}, 
+      {"rand-window",           no_argument,        0, 'W'}, 
+      {"tcp-opt",           no_argument,        0, 'C'}, 
+      {"no-arp-sweep",              no_argument,        0, '3'},
+      {"demo",         no_argument,   0,    'e'},
+      {0, 0, 0, 0}
+    };
+
+    while(TRUE){
+        c = getopt_long(argc, argv, "n:m:i:j:I:E:qF:t:r:sM:XWSCxhRHp:bPaflvoOVTdz?2:3De",
+                long_options, &option_index);
+
+        if (c == EOF)       /* If at end of options, then stop */
+          break;
+
+        switch(c) {
+            case 'n': /* Подсеть */
+                usernet = TRUE;
+                strlcpy(subnet, optarg, sizeof(subnet));
+                break;
+            case 'm': /* Маска подсети */
+                usernet = TRUE;
+                strlcpy(netmask, optarg, sizeof(netmask));
+                break;
+            case 'i': /* Сетевой интерфейс */
+                strlcpy(dev, optarg, sizeof(dev));
+                /* lbio_init will do further checking */
+                break;    
+            case 't': /* Размер окна */
+                throttlesize = read_number(optarg);
+                break;
+            case 'h': /* Жесткий захват */
+                isHardCapture = TRUE;
+                break;
+            case 'W': /* Случайный размер окна */
+                isRandWindow = TRUE;
+                break;
+        }
+
+    }
+    if (usernet){
+        GtkWidget *temp;
+        temp = getChild("entry_subnet", mainWindow);
+        if (temp == NULL)
+            g_print("Couldn't find child with such name\n");                       
+    }   
+}
+
+/* 
+*   Ищет дочерний виджет по имени в родительском parent
+*   Возвращает указатель на виджет, если находит его
+*   Иначе возвращает NULL
+*/
+GtkWidget* getChild(gchar *to_find, GtkContainer *parent)
+{
+    GList *children;
+    GList *curr;
+
+    GQueue *to_visit = g_queue_new();
+    GList *visited = NULL;
+
+    g_queue_push_tail(to_visit, parent);
+    // visited = g_list_append(parent);
+    
+/* доделать обход в ширину */
+    while (!g_queue_is_empty(to_visit)){
+        GtkWidget *temp = g_queue_pop_head(to_visit);
+        // g_print("Processing widget named %s.\t", gtk_widget_get_name(temp));
+        if (g_list_find(visited, temp) == NULL){
+            // g_print("Marking it as visited\n");
+            visited = g_list_append(visited, temp);
+            if (GTK_IS_CONTAINER(temp)){
+                // g_print("Children:\n");
+                children = gtk_container_get_children(temp);
+                for (curr = children; curr != NULL; curr = curr->next){
+                    g_queue_push_tail(to_visit, curr->data);
+                    // g_print("\t%s\n", gtk_widget_get_name(curr->data));
+                    // g_print("Pushed element %s to queue\n", gtk_widget_get_name(curr->data));
+                    if (strcmp(to_find, gtk_widget_get_name(curr->data)) == 0)
+                        return curr->data;
+                }
+            } 
+            // else g_print("No children\n");
+        }
+        // else g_print("It was visited earlier\n");
+    }
+    // g_print("queue is empty!\n");
+    return NULL;
+}
 
 /*
 *   Функция, вызываемая из другого потока для обновления 
@@ -179,9 +317,9 @@ gboolean update_ifaces_model(gpointer data)
 
 
 
-/***********************
-        Обработчики
-***********************/
+/*******************************************************************************
+                                    Обработчики
+********************************************************************************/
 
 /* 
 *   Обработчик закрытия главного окна
@@ -215,7 +353,6 @@ void on_btn_changeIpAddrSet_clicked()
 */
 void on_btn_changePortsSet_clicked()
 {
-
     /* проверяем, отрисовывалось ли уже это окно */
     if (gtk_widget_get_realized(portSetsWindow))         
         gtk_window_present(GTK_WINDOW(portSetsWindow));
