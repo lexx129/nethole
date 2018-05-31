@@ -25,6 +25,8 @@ gboolean ui_delete_fhost(gpointer data);
 
 gboolean update_ifaces_model(gpointer data);
 
+gboolean set_active_iface();
+
 
 /*
 *   Названия столбцов основной таблицы с ложными хостами

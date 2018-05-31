@@ -16,6 +16,7 @@
 
 rand_t      *rand;
 uint8_t		fhosts_amount;
+fake_host_t *last_host;     /* Указатель на последний элемент в списке */
 
 gchar* create_addr(int i, gboolean flag);
 

@@ -6,6 +6,8 @@
 #endif //NETHOLE_H
 // #include "structures.h"
 
+
+
 /*
 *   Несколько функций для тестового
 *   заполнения таблицы ложных хостов
@@ -13,37 +15,51 @@
 
 gpointer init_background()
 {
-    init_fakeHosts_table();
     get_interfaces();
+    init_fakeHosts_table();
 
     return NULL;
 }
 
 gpointer init_fakeHosts_table()
 {
+    LIST_INIT(&fake_hosts);
+
+    generate_fhosts(fake_hosts);
+   
+    fake_host_t *iter;
+    int i = 0;
+    LIST_FOREACH(iter, &fake_hosts, host_next) {
+        g_idle_add(ui_add_fhost, iter);
+
+//         g_print("Generated %d host.\nID: %d\n IP: %s\nMAC: %s\n \
+// Status: %d\nSource: %s\n****\n", i, iter->id,
+//                 ip_ntoa(&iter->fake_host_addr), eth_ntoa(&iter->fake_host_mac),
+//                 iter->status, ip_ntoa(&iter->source_addr));
+        i++;
+    }
+    return NULL;
+}
+
+
+
+/* 
+*  Генератор случайных ложных хостов 
+*  для тестового заполнения таблицы
+*/    
+void generate_fhosts(struct fake_host_list *list){
     uint8_t rand_am; /* Сколько хостов генерим */
+    int j;
     fhosts_amount = 0;
    
     rand = rand_open();
     if (NULL == rand){
         g_print("Couldn't initialise random");
     }
-
     rand_am = rand_uint8(rand) % MAX_RHOSTS_TO_GENERATE;
+    g_print("Generating %d hosts...\n", (int)rand_am);
+    
 
-    g_print("gonna generate %d hosts\n", (int)rand_am);
-
-
-    fake_host_t *last_host; /* Указатель на последний элемент в списке */
-
-    LIST_INIT(&fake_hosts);
-
-    int j;
-
-    /* 
-    *  Генератор случайных ложных хостов 
-    *  для тестового заполнения таблицы
-    */
     for(j = 0; j < (int)rand_am; j++){
         fake_host_t *new_host = create_fake_host();
 
@@ -59,19 +75,6 @@ gpointer init_fakeHosts_table()
         last_host = new_host;
         fhosts_amount++;
     }
-   
-    fake_host_t *iter;
-    int i = 0;
-    LIST_FOREACH(iter, &fake_hosts, host_next) {
-        g_idle_add(ui_add_fhost, iter);
-
-//         g_print("Generated %d host.\nID: %d\n IP: %s\nMAC: %s\n \
-// Status: %d\nSource: %s\n****\n", i, iter->id,
-//                 ip_ntoa(&iter->fake_host_addr), eth_ntoa(&iter->fake_host_mac),
-//                 iter->status, ip_ntoa(&iter->source_addr));
-        i++;
-    }
-    return NULL;
 }
 
 fake_host_t *create_fake_host()
@@ -104,19 +107,21 @@ void get_interfaces()
     while (tmp)
     {
         if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_PACKET){
-            // printf("%s\n", tmp->ifa_name);
+            printf("%s\n", tmp->ifa_name);
 
             /*
             *   Возможно, стоит складывать имена интерфейсов в контейнер
             *   чтобы вызвать функцию обновления списка в форме единожды
             */
-            g_idle_add(update_ifaces_model, (gpointer)tmp->ifa_name);
+            g_idle_add_full(G_PRIORITY_HIGH_IDLE, update_ifaces_model,
+             (gpointer)tmp->ifa_name, NULL);
         }
 
         tmp = tmp->ifa_next;
     }
     // g_idle_add(update_ifaces_model, );
     freeifaddrs(addrs);
+    g_idle_add(set_active_iface, NULL);
 }
 
 

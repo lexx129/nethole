@@ -8,8 +8,9 @@ GtkWidget       *ipSetsWindow;
 GtkWidget       *portSetsWindow;
 // GtkBuilder      *builder; 
 GtkWidget       *fhostsTree;
-GtkWidget       *ifacesCombo;
 GMutex          mutex_interface;
+
+char dev[BUFSIZE]="";
  
 int main(int argc, char *argv[])
 {    
@@ -26,14 +27,14 @@ int main(int argc, char *argv[])
     gtk_builder_connect_signals(builder, NULL);
     fhostsTree = GTK_WIDGET(gtk_builder_get_object(builder, 
                                                     "tree_fakeHosts"));
-    ifacesCombo = GTK_WIDGET(gtk_builder_get_object(builder,
-                                                    "combobox_iface"));
-    netHole_init(argc, argv);
+    // ifacesCombo = GTK_WIDGET(gtk_builder_get_object(builder,
+    //                                                 "combobox_iface"));
     /* 
     *  Все, что не связано с интерфейсом напрямую, 
     *  будет работать в другом потоке -- фоновом
     */
     g_thread_new("background", init_background, NULL);
+    netHole_init(argc, argv);
 
     g_object_unref(builder);
  
@@ -75,7 +76,7 @@ void netHole_init(int argc, char** argv)
     int usernet = FALSE;    /* True if user-specified subnet for capturing */
     char subnet[BUFSIZE]="";
     char netmask[BUFSIZE]="";
-    char dev[BUFSIZE]="";       /* Input device name */
+    // char dev[BUFSIZE]="";       /* Input device name */
     uint32_t throttlesize;
     gboolean isHardCapture = FALSE;
     gboolean isRandWindow = FALSE;
@@ -127,6 +128,7 @@ void netHole_init(int argc, char** argv)
                 break;    
             case 't': /* Размер окна */
                 throttlesize = read_number(optarg);
+
                 break;
             case 'h': /* Жесткий захват */
                 isHardCapture = TRUE;
@@ -138,16 +140,76 @@ void netHole_init(int argc, char** argv)
 
     }
     if (usernet){
-        GtkWidget *temp;
-        temp = getChild("entry_subnet", mainWindow);
-        if (temp == NULL)
-            g_print("Couldn't find child with such name\n");                       
+        GtkWidget *subnetEntry;
+        GtkWidget *netmaskEntry;
+        subnetEntry = getChild("entry_subnet", mainWindow);
+        if (!subnetEntry) /* Проверить, что виджет был найден */
+            g_print("Couldn't find 'entry_subnet'\n");                       
+        else
+            gtk_entry_set_text(subnetEntry, subnet);
+        netmaskEntry = getChild("entry_netmask", mainWindow);
+        if (!subnetEntry)
+            g_print("Couldn't find 'entry_netmask'\n");                       
+        else
+            gtk_entry_set_text(netmaskEntry, netmask);
     }   
+
+    if (throttlesize){
+        GtkWidget *windowSizeSpin;
+        windowSizeSpin = getChild("spnbtn_throttleSize", mainWindow);
+        if (!windowSizeSpin)
+            g_print("Couldn't find window size spinButton\n");
+        gtk_spin_button_set_value(windowSizeSpin, throttlesize);
+    }
+
+    if (isHardCapture){
+        GtkWidget *randWindowCheck;
+        randWindowCheck = getChild("chk_randWindow", mainWindow);
+        if (randWindowCheck)
+            gtk_toggle_button_set_active(randWindowCheck, TRUE);
+    }
+}
+
+gboolean set_active_iface()
+{
+    if (strcmp(dev, "") != 0){
+        // g_print("Setting iface from parameter..\n");
+        GtkTreeModel    *ifacesModel;
+        GtkWidget       *ifacesCombo;
+        GtkTreeIter     curr;
+        gboolean        has_next;
+        gchar           *curr_iface_name;
+    /* Функция выполняется быстрее, чем фоновый поток успевает заполнить список сетевых интерфейсов */
+        ifacesCombo = getChild("combobox_iface", mainWindow);
+        if (!ifacesCombo)
+            g_print("Couldn't find ifaces combobox");
+        g_mutex_lock(&mutex_interface); 
+     
+        ifacesModel = gtk_combo_box_get_model(GTK_COMBO_BOX(ifacesCombo));
+        gint rows = gtk_tree_model_iter_n_children(ifacesModel, NULL);
+        g_print("Got the ifaces model, it has %d positions\n", rows);
+        has_next = gtk_tree_model_get_iter_first(ifacesModel, &curr);
+        if (!has_next)
+            g_print("Couldn't get iterator\n");
+
+        while(has_next){
+            gtk_tree_model_get(ifacesModel, &curr, 0, &curr_iface_name, -1);
+            if (strcmp(curr_iface_name, dev) == 0){
+                gtk_combo_box_set_active_iter(ifacesCombo, &curr);
+                g_print("Setting %s as active iface\n", curr_iface_name);
+                has_next = FALSE;
+            }
+            else
+                has_next = gtk_tree_model_iter_next(ifacesModel, &curr);
+        }
+        g_mutex_unlock(&mutex_interface);
+    }
+    return G_SOURCE_REMOVE;
 }
 
 /* 
 *   Ищет дочерний виджет по имени в родительском parent
-*   Возвращает указатель на виджет, если находит его
+*   Возвращает указатель на виджет, если находит его.
 *   Иначе возвращает NULL
 */
 GtkWidget* getChild(gchar *to_find, GtkContainer *parent)
@@ -161,7 +223,6 @@ GtkWidget* getChild(gchar *to_find, GtkContainer *parent)
     g_queue_push_tail(to_visit, parent);
     // visited = g_list_append(parent);
     
-/* доделать обход в ширину */
     while (!g_queue_is_empty(to_visit)){
         GtkWidget *temp = g_queue_pop_head(to_visit);
         // g_print("Processing widget named %s.\t", gtk_widget_get_name(temp));
@@ -290,11 +351,17 @@ void status_to_string(int i, gchar *result)
 
 gboolean update_ifaces_model(gpointer data)
 {
-    GtkTreeModel *ifacesModel;
-    GtkTreePath *path;
-    GtkTreeIter iter;
+    GtkTreeModel    *ifacesModel;
+    GtkTreePath     *path;
+    GtkTreeIter     iter;
+    GtkWidget       *ifacesCombo;
+
 
     g_mutex_lock(&mutex_interface); 
+    ifacesCombo = getChild("combobox_iface", mainWindow);
+    if (!ifacesCombo)
+        g_print("Couldn't find ifaces combobox");
+    
 
     ifacesModel = gtk_combo_box_get_model(GTK_COMBO_BOX(ifacesCombo));
 

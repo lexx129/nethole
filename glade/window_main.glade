@@ -94,7 +94,6 @@
                 <property name="margin_top">6</property>
                 <property name="shadow_type">in</property>
                 <property name="min_content_height">400</property>
-                <signal name="show" handler="on_scrlWindow_fakeHosts_show" object="tree_fakeHosts" swapped="no"/>
                 <child>
                   <object class="GtkTreeView" id="tree_fakeHosts">
                     <property name="visible">True</property>
@@ -432,7 +431,6 @@
                     <property name="name">lbl_subnet</property>
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
-                    <property name="margin_right">40</property>
                     <property name="xalign">0</property>
                     <property name="label" translatable="yes">Подсеть:</property>
                     <property name="justify">right</property>
@@ -462,7 +460,9 @@
                   <object class="GtkLabel" id="label4">
                     <property name="visible">True</property>
                     <property name="can_focus">False</property>
+                    <property name="xalign">0</property>
                     <property name="label" translatable="yes">Включить ловушку</property>
+                    <property name="justify">right</property>
                   </object>
                   <packing>
                     <property name="left_attach">0</property>
@@ -537,6 +537,7 @@
                 </child>
                 <child>
                   <object class="GtkSpinButton" id="spnbtn_throttleSize">
+                    <property name="name">spnbtn_throttleSize</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="has_focus">True</property>
@@ -706,6 +707,7 @@
                 <child>
                   <object class="GtkCheckButton" id="chk_randWindow">
                     <property name="label" translatable="yes">Случайный размер окна</property>
+                    <property name="name">chk_randWindow</property>
                     <property name="visible">True</property>
                     <property name="can_focus">True</property>
                     <property name="receives_default">False</property>
